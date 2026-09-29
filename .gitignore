@@ -1,0 +1,9 @@
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Internal Agents & IDE Tools (agar bundle web tetap ringan dan privat)
+.agents/
+*.log
