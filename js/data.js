@@ -142,6 +142,23 @@ const ANDROID_PROJECTS = [
       "Sistem approval verifikasi pembayaran langsung oleh RT",
       "Riwayat transaksi dan bukti kwitansi digital untuk warga"
     ]
+  },
+  {
+    id: "apk-kasir",
+    title: "Aplikasi Kasir Klontong",
+    subtitle: "Sistem Point of Sale (POS) & Manajemen Stok Toko",
+    platform: "Android (Kotlin)",
+    status: "Production Ready",
+    image: "assets/images/ApkKasir.webp",
+    description: "Aplikasi kasir lengkap untuk toko klontong yang mencakup mesin kasir digital dengan scan barcode, manajemen katalog barang (master data), pencatatan transaksi penjualan, serta fitur pelacakan pergerakan stok dan proyeksi keuntungan usaha secara real-time.",
+    features: [
+      "Mesin kasir digital dengan pencarian produk & scan barcode",
+      "Pencatatan stok movement (pergerakan masuk & keluar barang secara real-time)",
+      "Pelacakan pergerakan keuangan (arus kas harian, mingguan, dan bulanan)",
+      "Proyeksi keuntungan usaha berdasarkan data transaksi & margin produk",
+      "Master data katalog barang lengkap dengan kategori & harga",
+      "Riwayat catatan transaksi penjualan dengan detail lengkap"
+    ]
   }
 ];
 

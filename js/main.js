@@ -45,44 +45,175 @@
     }
   }
 
-  // 2. Render Android Project (SlametApp)
-  function renderAndroidProjects() {
-    const container = document.getElementById("android-project-container");
-    if (!container || !window.ANDROID_PROJECTS) return;
+  // 2. Render Android Projects (Slideshow)
+  let androidCurrentSlide = 0;
+  let androidAutoPlayTimer = null;
 
-    container.innerHTML = window.ANDROID_PROJECTS
+  function renderAndroidProjects() {
+    const track = document.getElementById("android-slideshow-track");
+    const dotsContainer = document.getElementById("android-dots");
+    if (!track || !dotsContainer || !window.ANDROID_PROJECTS) return;
+
+    const projects = window.ANDROID_PROJECTS;
+
+    // Render slides
+    track.innerHTML = projects
       .map(
-        (app) => `
-      <div class="android-card">
-        <div class="android-media" onclick="window.openImageZoom('${app.image}', '${app.title} - ${app.subtitle}')" title="Klik untuk memperbesar gambar">
-          <img src="${app.image}" alt="${app.title}" class="android-img" />
-          <span class="android-badge-status">
-            <span class="status-dot"></span>
-            ${app.status}
-          </span>
-        </div>
-        <div class="android-body">
-          <div class="android-pill-row">
-            <span class="hw-pill">${app.platform}</span>
+        (app, index) => `
+      <div class="android-slide ${index === 0 ? 'active' : ''}" data-slide="${index}">
+        <div class="android-card">
+          <div class="android-media" onclick="window.openImageZoom('${app.image}', '${app.title} - ${app.subtitle}')" title="Klik untuk memperbesar gambar">
+            <img src="${app.image}" alt="${app.title}" class="android-img" />
+            <span class="android-badge-status">
+              <span class="status-dot"></span>
+              ${app.status}
+            </span>
           </div>
-          <h3 class="android-title">${app.title}</h3>
-          <div class="android-sub">${app.subtitle}</div>
-          <p class="android-desc">${app.description}</p>
-          <div class="android-features">
-            <div style="font-size:0.8rem; font-weight:600; color:var(--text-main); margin-bottom:8px;">Fitur Utama:</div>
-            <ul style="list-style:none; display:flex; flex-direction:column; gap:6px;">
-              ${app.features.map(f => `
-                <li style="font-size:0.82rem; color:var(--text-muted); display:flex; align-items:baseline; gap:8px;">
-                  <span style="color:var(--text-dim); font-size:0.75rem;">&bull;</span> ${f}
-                </li>
-              `).join("")}
-            </ul>
+          <div class="android-body">
+            <div class="android-pill-row">
+              <span class="hw-pill">${app.platform}</span>
+            </div>
+            <h3 class="android-title">${app.title}</h3>
+            <div class="android-sub">${app.subtitle}</div>
+            <p class="android-desc">${app.description}</p>
+            <div class="android-features">
+              <div style="font-size:0.8rem; font-weight:600; color:var(--text-main); margin-bottom:8px;">Fitur Utama:</div>
+              <ul style="list-style:none; display:flex; flex-direction:column; gap:6px;">
+                ${app.features.map(f => `
+                  <li style="font-size:0.82rem; color:var(--text-muted); display:flex; align-items:baseline; gap:8px;">
+                    <span style="color:var(--text-dim); font-size:0.75rem;">&bull;</span> ${f}
+                  </li>
+                `).join("")}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     `
       )
       .join("");
+
+    // Render dots
+    dotsContainer.innerHTML = projects
+      .map(
+        (app, index) => `
+        <button class="slideshow-dot ${index === 0 ? 'active' : ''}" data-slide="${index}" aria-label="${app.title}">
+          <span class="slideshow-dot-label">${app.title}</span>
+        </button>
+      `
+      )
+      .join("");
+
+    // Setup navigation
+    setupAndroidSlideshow(projects.length);
+  }
+
+  function goToAndroidSlide(index) {
+    const slides = document.querySelectorAll(".android-slide");
+    const dots = document.querySelectorAll(".slideshow-dot");
+    if (!slides.length) return;
+
+    const total = slides.length;
+    androidCurrentSlide = ((index % total) + total) % total;
+
+    slides.forEach((slide, i) => {
+      slide.classList.toggle("active", i === androidCurrentSlide);
+    });
+
+    dots.forEach((dot, i) => {
+      dot.classList.toggle("active", i === androidCurrentSlide);
+    });
+  }
+
+  function setupAndroidSlideshow(totalSlides) {
+    const prevBtn = document.getElementById("android-prev");
+    const nextBtn = document.getElementById("android-next");
+    const dotsContainer = document.getElementById("android-dots");
+    const slideshowEl = document.getElementById("android-slideshow");
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => {
+        goToAndroidSlide(androidCurrentSlide - 1);
+        resetAutoPlay();
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => {
+        goToAndroidSlide(androidCurrentSlide + 1);
+        resetAutoPlay();
+      });
+    }
+
+    if (dotsContainer) {
+      dotsContainer.addEventListener("click", (e) => {
+        const dot = e.target.closest(".slideshow-dot");
+        if (dot) {
+          goToAndroidSlide(parseInt(dot.dataset.slide, 10));
+          resetAutoPlay();
+        }
+      });
+    }
+
+    // Auto-play every 6 seconds
+    startAutoPlay();
+
+    // Pause on hover
+    if (slideshowEl) {
+      slideshowEl.addEventListener("mouseenter", () => clearInterval(androidAutoPlayTimer));
+      slideshowEl.addEventListener("mouseleave", () => startAutoPlay());
+    }
+
+    // Touch swipe support for mobile
+    if (slideshowEl) {
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      slideshowEl.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      slideshowEl.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            goToAndroidSlide(androidCurrentSlide + 1);
+          } else {
+            goToAndroidSlide(androidCurrentSlide - 1);
+          }
+          resetAutoPlay();
+        }
+      }, { passive: true });
+    }
+
+    // Keyboard arrow support when slideshow is in viewport
+    document.addEventListener("keydown", (e) => {
+      if (!slideshowEl) return;
+      const rect = slideshowEl.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+      if (!inView) return;
+
+      if (e.key === "ArrowLeft") {
+        goToAndroidSlide(androidCurrentSlide - 1);
+        resetAutoPlay();
+      } else if (e.key === "ArrowRight") {
+        goToAndroidSlide(androidCurrentSlide + 1);
+        resetAutoPlay();
+      }
+    });
+  }
+
+  function startAutoPlay() {
+    clearInterval(androidAutoPlayTimer);
+    androidAutoPlayTimer = setInterval(() => {
+      goToAndroidSlide(androidCurrentSlide + 1);
+    }, 6000);
+  }
+
+  function resetAutoPlay() {
+    clearInterval(androidAutoPlayTimer);
+    startAutoPlay();
   }
 
   // 3. Render IoT Project Cards
